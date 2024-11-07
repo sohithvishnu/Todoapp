@@ -2,37 +2,46 @@
     let username = '';
     let password = '';
     let errorMessage = '';
+    let isSignup = false;
 
-    async function login() {
+    async function submitForm() {
+        const action = isSignup ? 'signup' : 'login';
         const response = await fetch('/api/auth', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, action })
         });
 
         if (response.ok) {
-            const { token } = await response.json();
-            localStorage.setItem('token', token);
-            window.location.href = '/tasks'; // Redirect to tasks page
+            if (!isSignup) {
+                const { token } = await response.json();
+                localStorage.setItem('token', token);
+                window.location.href = '/tasks'; // Redirect to tasks page
+            } else {
+                window.location.href = '/login'; // Redirect to login after sign-up
+            }
         } else {
             const errorData = await response.json();
-            errorMessage = errorData.error || 'Login failed';
+            errorMessage = errorData.error || 'Something went wrong';
         }
     }
 </script>
 
 <main>
-    <h1 class="app-title">Login</h1>
+    <h1 class="app-title">{isSignup ? 'Sign Up' : 'Login'}</h1>
     {#if errorMessage}
         <div class="error-message">{errorMessage}</div>
     {/if}
     <div class="input-group">
         <input class="login-input" bind:value={username} placeholder="Username" />
         <input class="login-input" type="password" bind:value={password} placeholder="Password" />
-        <button class="login-button" on:click={login}>Login</button>
+        <button class="login-button" on:click={submitForm}>{isSignup ? 'Sign Up' : 'Login'}</button>
     </div>
+    <button on:click={() => isSignup = !isSignup}>
+        {isSignup ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
+    </button>
 </main>
 
 <style>
